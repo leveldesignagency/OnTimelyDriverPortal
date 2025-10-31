@@ -1,6 +1,7 @@
-import React from 'react'
-import { SupabaseProvider } from './lib/SupabaseProvider'
+import React, { useState, useEffect } from 'react'
+import { SupabaseProvider, useSupabase } from './lib/SupabaseProvider'
 import Trips from './pages/Trips'
+import Login from './pages/Login'
 
 const isMobileOrTablet = () => {
   if (typeof navigator !== 'undefined') {
@@ -9,19 +10,60 @@ const isMobileOrTablet = () => {
   return false
 }
 
-export default function App() {
+function AppContent() {
+  const supabase = useSupabase()
+  const [session, setSession] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const allowed = isMobileOrTablet()
-  return (
-    <SupabaseProvider>
-      <div style={{ 
-        minHeight: '100vh', 
+
+  useEffect(() => {
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const handleLogin = () => {
+    // Session will be updated via onAuthStateChange
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
         background: '#000000',
-        color: '#cbd5e1',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
-        position: 'relative',
-        overflow: 'hidden'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#cbd5e1'
       }}>
-        {!allowed ? (
+        Loading...
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      background: '#000000',
+      color: '#cbd5e1',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {!session ? (
+        <Login onLogin={handleLogin} />
+      ) : !allowed ? (
           <div style={{
             position: 'relative',
             minHeight: '100vh',
@@ -127,6 +169,13 @@ export default function App() {
           <Trips />
         )}
       </div>
+  )
+}
+
+export default function App() {
+  return (
+    <SupabaseProvider>
+      <AppContent />
     </SupabaseProvider>
   )
 }

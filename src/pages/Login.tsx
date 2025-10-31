@@ -213,4 +213,3 @@ export default function Login({ onLogin }: LoginProps) {
     </div>
   )
 }
-

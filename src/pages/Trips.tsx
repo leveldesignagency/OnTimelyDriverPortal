@@ -5,10 +5,12 @@ type Trip = {
   id: string
   first_name: string
   last_name: string
+  email: string | null
+  contact_number: string | null
   chauffer_pickup_time: string | null
   chauffer_pickup_location: string | null
   chauffer_dropoff_location: string | null
-  chauffer_arrival_destination: string | null
+  chauffer_dropoff_time: string | null
 }
 
 export default function Trips() {
@@ -58,7 +60,7 @@ export default function Trips() {
     try {
       let query = supabase
         .from('guests')
-        .select('id, first_name, last_name, chauffer_pickup_time, chauffer_pickup_location, chauffer_dropoff_location, chauffer_arrival_destination')
+        .select('id, first_name, last_name, email, contact_number, chauffer_pickup_time, chauffer_pickup_location, chauffer_dropoff_location, chauffer_dropoff_time')
 
       // Query by driver_id first (preferred), fallback to name for backwards compatibility
       if (driverId) {
@@ -236,28 +238,8 @@ export default function Trips() {
                   </div>
                 </div>
               </div>
-              <div style={{
-                background: 'rgba(15, 17, 21, 0.4)',
-                borderRadius: '12px',
-                padding: '12px',
-                marginBottom: '12px'
-              }}>
-                <div style={{
-                  fontSize: '13px',
-                  color: '#9ca3af',
-                  marginBottom: '6px'
-                }}>
-                  Pickup
-                </div>
-                <div style={{
-                  fontSize: '15px',
-                  color: '#e5e7eb',
-                  fontWeight: 500
-                }}>
-                  {nextTrip.chauffer_pickup_location || 'Location TBD'}
-                </div>
-              </div>
-              {nextTrip.chauffer_dropoff_location && (
+              {/* Contact Info */}
+              {(nextTrip.email || nextTrip.contact_number) && (
                 <div style={{
                   background: 'rgba(15, 17, 21, 0.4)',
                   borderRadius: '12px',
@@ -267,17 +249,125 @@ export default function Trips() {
                   <div style={{
                     fontSize: '13px',
                     color: '#9ca3af',
-                    marginBottom: '6px'
+                    marginBottom: '8px'
                   }}>
+                    Contact
+                  </div>
+                  {nextTrip.email && (
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#e5e7eb',
+                      marginBottom: '4px'
+                    }}>
+                      📧 {nextTrip.email}
+                    </div>
+                  )}
+                  {nextTrip.contact_number && (
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#e5e7eb'
+                    }}>
+                      📱 {nextTrip.contact_number}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Pickup Info */}
+              <div style={{
+                background: 'rgba(15, 17, 21, 0.4)',
+                borderRadius: '12px',
+                padding: '12px',
+                marginBottom: '12px'
+              }}>
+                <div style={{
+                  fontSize: '13px',
+                  color: '#9ca3af',
+                  marginBottom: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  Pickup Time
+                </div>
+                <div style={{
+                  fontSize: '15px',
+                  color: '#10b981',
+                  fontWeight: 600,
+                  marginBottom: '8px'
+                }}>
+                  {formatDate(nextTrip.chauffer_pickup_time)}
+                </div>
+                <div style={{
+                  fontSize: '13px',
+                  color: '#9ca3af',
+                  marginBottom: '4px'
+                }}>
+                  Location
+                </div>
+                <div style={{
+                  fontSize: '15px',
+                  color: '#e5e7eb',
+                  fontWeight: 500
+                }}>
+                  {nextTrip.chauffer_pickup_location || 'Location TBD'}
+                </div>
+              </div>
+              
+              {/* Dropoff Info */}
+              {(nextTrip.chauffer_dropoff_location || nextTrip.chauffer_dropoff_time) && (
+                <div style={{
+                  background: 'rgba(15, 17, 21, 0.4)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#9ca3af',
+                    marginBottom: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Drop-off
                   </div>
-                  <div style={{
-                    fontSize: '15px',
-                    color: '#e5e7eb',
-                    fontWeight: 500
-                  }}>
-                    {nextTrip.chauffer_dropoff_location}
-                  </div>
+                  {nextTrip.chauffer_dropoff_time && (
+                    <div style={{
+                      fontSize: '15px',
+                      color: '#10b981',
+                      fontWeight: 600,
+                      marginBottom: '8px'
+                    }}>
+                      {formatDate(nextTrip.chauffer_dropoff_time)}
+                    </div>
+                  )}
+                  {nextTrip.chauffer_dropoff_location && (
+                    <>
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#9ca3af',
+                        marginBottom: '4px'
+                      }}>
+                        Location
+                      </div>
+                      <div style={{
+                        fontSize: '15px',
+                        color: '#e5e7eb',
+                        fontWeight: 500
+                      }}>
+                        {nextTrip.chauffer_dropoff_location}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               <button
@@ -361,6 +451,42 @@ export default function Trips() {
                     </div>
                   </div>
                 </div>
+                {/* Contact Info */}
+                {(trip.email || trip.contact_number) && (
+                  <div style={{
+                    background: 'rgba(15, 17, 21, 0.4)',
+                    borderRadius: '10px',
+                    padding: '10px',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      marginBottom: '6px'
+                    }}>
+                      Contact
+                    </div>
+                    {trip.email && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#e5e7eb',
+                        marginBottom: '2px'
+                      }}>
+                        📧 {trip.email}
+                      </div>
+                    )}
+                    {trip.contact_number && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#e5e7eb'
+                      }}>
+                        📱 {trip.contact_number}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Pickup Info */}
                 <div style={{
                   background: 'rgba(15, 17, 21, 0.4)',
                   borderRadius: '10px',
@@ -370,9 +496,24 @@ export default function Trips() {
                   <div style={{
                     fontSize: '12px',
                     color: '#9ca3af',
+                    marginBottom: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    Pickup
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#10b981',
+                    fontWeight: 600,
                     marginBottom: '4px'
                   }}>
-                    Pickup
+                    {formatDate(trip.chauffer_pickup_time)}
                   </div>
                   <div style={{
                     fontSize: '14px',
@@ -381,7 +522,9 @@ export default function Trips() {
                     {trip.chauffer_pickup_location || 'Location TBD'}
                   </div>
                 </div>
-                {trip.chauffer_dropoff_location && (
+                
+                {/* Dropoff Info */}
+                {(trip.chauffer_dropoff_location || trip.chauffer_dropoff_time) && (
                   <div style={{
                     background: 'rgba(15, 17, 21, 0.4)',
                     borderRadius: '10px',
@@ -390,16 +533,35 @@ export default function Trips() {
                     <div style={{
                       fontSize: '12px',
                       color: '#9ca3af',
-                      marginBottom: '4px'
+                      marginBottom: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
                     }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
                       Drop-off
                     </div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#e5e7eb'
-                    }}>
-                      {trip.chauffer_dropoff_location}
-                    </div>
+                    {trip.chauffer_dropoff_time && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#10b981',
+                        fontWeight: 600,
+                        marginBottom: '4px'
+                      }}>
+                        {formatDate(trip.chauffer_dropoff_time)}
+                      </div>
+                    )}
+                    {trip.chauffer_dropoff_location && (
+                      <div style={{
+                        fontSize: '14px',
+                        color: '#e5e7eb'
+                      }}>
+                        {trip.chauffer_dropoff_location}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

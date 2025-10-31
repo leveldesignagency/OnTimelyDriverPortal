@@ -54,12 +54,14 @@ function AppContent() {
 
   return (
     <div style={{ 
-      minHeight: '100vh', 
+      minHeight: '100dvh', 
       background: '#000000',
       color: '#cbd5e1',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      paddingTop: 'env(safe-area-inset-top, 0px)',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)'
     }}>
       {!session ? (
         <Login onLogin={handleLogin} />
@@ -100,12 +102,12 @@ function AppContent() {
             }}>
               {/* Icon */}
               <div style={{
-                fontSize: '64px',
-                marginBottom: '24px',
-                display: 'flex',
-                justifyContent: 'center'
+                display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px'
               }}>
-                📱
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="7" y="2" width="10" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12" y2="18"></line>
+                </svg>
               </div>
               
               {/* Heading */}
@@ -130,37 +132,17 @@ function AppContent() {
               </p>
               
               {/* Icons row */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '20px',
-                marginTop: '24px'
-              }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '28px',
-                  border: '1px solid rgba(16, 185, 129, 0.2)'
-                }}>
-                  📲
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '8px' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid rgba(16,185,129,0.25)', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="7" y="2" width="10" height="20" rx="2" ry="2"></rect>
+                  </svg>
                 </div>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '28px',
-                  border: '1px solid rgba(16, 185, 129, 0.2)'
-                }}>
-                  📟
+                <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid rgba(16,185,129,0.25)', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 19V6h13v10"/>
+                    <path d="M1 19h22v2H1z"/>
+                  </svg>
                 </div>
               </div>
             </div>

@@ -42,13 +42,16 @@ export default function Login({ onLogin }: LoginProps) {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
+      paddingTop: 'env(safe-area-inset-top, 0px)',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       background: '#000000',
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px'
+      paddingLeft: '16px',
+      paddingRight: '16px'
     }}>
       {/* Background gradient overlay */}
       <div style={{
@@ -77,13 +80,8 @@ export default function Login({ onLogin }: LoginProps) {
       }}>
         {/* Logo/Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            fontSize: '32px',
-            fontWeight: 700,
-            color: '#e5e7eb',
-            marginBottom: '8px'
-          }}>
-            OnTimely
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <img src="/logo.svg" alt="OnTimely" style={{ height: 36, width: 'auto', opacity: 0.95 }} />
           </div>
           <div style={{
             fontSize: '16px',

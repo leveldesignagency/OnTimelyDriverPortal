@@ -126,7 +126,7 @@ export default function Trips() {
         background: 'rgba(17, 24, 39, 0.55)',
         backdropFilter: 'blur(8px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        padding: '20px 20px 16px',
+        padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 20px 12px',
         position: 'sticky',
         top: 0,
         zIndex: 100
@@ -414,11 +414,10 @@ export default function Trips() {
           padding: '60px 20px',
           textAlign: 'center'
         }}>
-          <div style={{
-            fontSize: '48px',
-            marginBottom: '16px'
-          }}>
-            🚗
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 13l2-2 4 4 8-8 2 2-10 10-4-4z"/>
+            </svg>
           </div>
           <div style={{
             fontSize: '20px',

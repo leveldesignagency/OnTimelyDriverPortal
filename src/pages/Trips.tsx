@@ -16,6 +16,7 @@ export default function Trips() {
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [driverName, setDriverName] = useState<string | null>(null)
+  const [driverId, setDriverId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -24,11 +25,11 @@ export default function Trips() {
   }, [])
 
   useEffect(() => {
-    if (driverName) {
+    if (driverName || driverId) {
       loadTrips()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driverName])
+  }, [driverName, driverId])
 
   const loadDriverInfo = async () => {
     try {
@@ -38,12 +39,13 @@ export default function Trips() {
       // Get driver info from drivers table
       const { data: driverData, error: driverError } = await supabase
         .from('drivers')
-        .select('full_name')
+        .select('id, full_name')
         .eq('auth_user_id', user.id)
         .single()
 
       if (!driverError && driverData) {
         setDriverName(driverData.full_name)
+        setDriverId(driverData.id)
       }
     } catch (e: any) {
       console.error('Failed to load driver info:', e)
@@ -54,11 +56,21 @@ export default function Trips() {
     setLoading(true)
     setError(null)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('guests')
         .select('id, first_name, last_name, chauffer_pickup_time, chauffer_pickup_location, chauffer_dropoff_location, chauffer_arrival_destination')
-        .eq('chauffer_name', driverName || '')
-        .order('chauffer_pickup_time', { ascending: true })
+
+      // Query by driver_id first (preferred), fallback to name for backwards compatibility
+      if (driverId) {
+        query = query.eq('chauffer_driver_id', driverId)
+      } else if (driverName) {
+        query = query.eq('chauffer_name', driverName)
+      } else {
+        setLoading(false)
+        return
+      }
+
+      const { data, error } = await query.order('chauffer_pickup_time', { ascending: true })
 
       if (error) throw error
 

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useSupabase } from '../lib/SupabaseProvider'
+import QRScanner from '../components/QRScanner'
 
 type Trip = {
   id: string
   guest_id: string
+  event_id: string
   guest_first_name: string
   guest_last_name: string
   guest_email: string | null
@@ -12,6 +14,13 @@ type Trip = {
   pickup_location: string | null
   dropoff_location: string | null
   dropoff_time: string | null
+  status?: 'pending' | 'collected' | 'arrived' | 'delayed' | 'cancelled'
+  collected_at?: string | null
+  arrived_at?: string | null
+  delay_reason?: string | null
+  delay_minutes?: number | null
+  cancelled_at?: string | null
+  cancellation_reason?: string | null
 }
 
 export default function Trips() {
@@ -21,6 +30,15 @@ export default function Trips() {
   const [driverName, setDriverName] = useState<string | null>(null)
   const [driverId, setDriverId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showQRScanner, setShowQRScanner] = useState(false)
+  const [scanningTripId, setScanningTripId] = useState<string | null>(null)
+  const [showDelayModal, setShowDelayModal] = useState(false)
+  const [delayTripId, setDelayTripId] = useState<string | null>(null)
+  const [delayMinutes, setDelayMinutes] = useState<string>('')
+  const [delayReason, setDelayReason] = useState<string>('')
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelTripId, setCancelTripId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState<string>('')
 
   useEffect(() => {
     loadDriverInfo()
@@ -87,7 +105,7 @@ export default function Trips() {
       // This table is designed for drivers to read (respects RLS policies)
       let query = supabase
         .from('driver_trips')
-        .select('id, guest_id, guest_first_name, guest_last_name, guest_email, guest_contact_number, pickup_time, pickup_location, dropoff_location, dropoff_time')
+        .select('id, guest_id, event_id, guest_first_name, guest_last_name, guest_email, guest_contact_number, pickup_time, pickup_location, dropoff_location, dropoff_time, status, collected_at, arrived_at, delay_reason, delay_minutes, cancelled_at, cancellation_reason')
 
       // Query by driver_id - this is the correct way for driver_trips table
       if (driverId) {
@@ -127,6 +145,241 @@ export default function Trips() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     window.location.reload()
+  }
+
+  // Handle QR code scan confirmation
+  const handleQRScan = async (scannedGuestId: string) => {
+    if (!scanningTripId) return
+
+    const trip = trips.find(t => t.id === scanningTripId)
+    if (!trip) return
+
+    // Verify the scanned QR code matches the trip's guest
+    if (scannedGuestId !== trip.guest_id) {
+      setError('QR code does not match this guest. Please scan the correct QR code.')
+      setShowQRScanner(false)
+      setScanningTripId(null)
+      return
+    }
+
+    try {
+      // Update trip status to collected
+      const { error: updateError } = await supabase
+        .from('driver_trips')
+        .update({
+          status: 'collected',
+          collected_at: new Date().toISOString()
+        })
+        .eq('id', scanningTripId)
+
+      if (updateError) throw updateError
+
+      // Create journey checkpoint
+      await createJourneyCheckpoint(trip.guest_id, trip.event_id, 'collected_by_driver')
+
+      // Send notifications
+      await sendNotifications(trip, 'collected')
+
+      // Reload trips
+      await loadTrips()
+      setShowQRScanner(false)
+      setScanningTripId(null)
+      setError(null)
+    } catch (err: any) {
+      console.error('Failed to confirm QR scan:', err)
+      setError('Failed to confirm collection: ' + (err.message || 'Unknown error'))
+      setShowQRScanner(false)
+      setScanningTripId(null)
+    }
+  }
+
+  // Mark trip as arrived
+  const handleMarkArrived = async (tripId: string) => {
+    try {
+      const { error } = await supabase
+        .from('driver_trips')
+        .update({
+          status: 'arrived',
+          arrived_at: new Date().toISOString()
+        })
+        .eq('id', tripId)
+
+      if (error) throw error
+
+      const trip = trips.find(t => t.id === tripId)
+      if (trip) {
+        await createJourneyCheckpoint(trip.guest_id, trip.event_id, 'arrived_at_destination')
+        await sendNotifications(trip, 'arrived')
+      }
+
+      await loadTrips()
+      setError(null)
+    } catch (err: any) {
+      console.error('Failed to mark as arrived:', err)
+      setError('Failed to mark as arrived: ' + (err.message || 'Unknown error'))
+    }
+  }
+
+  // Handle delay
+  const handleSetDelay = async () => {
+    if (!delayTripId || !delayMinutes || !delayReason.trim()) {
+      setError('Please provide delay minutes and reason')
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('driver_trips')
+        .update({
+          status: 'delayed',
+          delay_minutes: parseInt(delayMinutes),
+          delay_reason: delayReason.trim()
+        })
+        .eq('id', delayTripId)
+
+      if (error) throw error
+
+      const trip = trips.find(t => t.id === delayTripId)
+      if (trip) {
+        await sendNotifications(trip, 'delayed', delayReason.trim(), parseInt(delayMinutes))
+      }
+
+      await loadTrips()
+      setShowDelayModal(false)
+      setDelayTripId(null)
+      setDelayMinutes('')
+      setDelayReason('')
+      setError(null)
+    } catch (err: any) {
+      console.error('Failed to set delay:', err)
+      setError('Failed to set delay: ' + (err.message || 'Unknown error'))
+    }
+  }
+
+  // Handle cancellation
+  const handleCancelTrip = async () => {
+    if (!cancelTripId || !cancelReason.trim()) {
+      setError('Please provide a cancellation reason')
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('driver_trips')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancellation_reason: cancelReason.trim()
+        })
+        .eq('id', cancelTripId)
+
+      if (error) throw error
+
+      const trip = trips.find(t => t.id === cancelTripId)
+      if (trip) {
+        await sendNotifications(trip, 'cancelled', cancelReason.trim())
+      }
+
+      await loadTrips()
+      setShowCancelModal(false)
+      setCancelTripId(null)
+      setCancelReason('')
+      setError(null)
+    } catch (err: any) {
+      console.error('Failed to cancel trip:', err)
+      setError('Failed to cancel trip: ' + (err.message || 'Unknown error'))
+    }
+  }
+
+  // Create journey checkpoint
+  const createJourneyCheckpoint = async (guestId: string, eventId: string, checkpointType: string) => {
+    try {
+      // Try to create checkpoint - this might fail if journey checkpoint system isn't set up
+      // So we'll catch and ignore errors
+      const checkpointData: any = {
+        guest_id: guestId,
+        event_id: eventId,
+        checkpoint_type: checkpointType,
+        checkpoint_name: checkpointType === 'collected_by_driver' ? 'Collected by Driver' : 'Arrived at Destination',
+        status: 'completed',
+        actual_time: new Date().toISOString(),
+        completion_method: 'manual_override'
+      }
+
+      // Try to insert into journey_checkpoints if table exists
+      // This is optional - the system will work without it
+      await supabase
+        .from('journey_checkpoints')
+        .insert(checkpointData)
+        .catch(() => {
+          // Ignore if table doesn't exist or other errors
+          console.log('Journey checkpoint not created (optional feature)')
+        })
+    } catch (err) {
+      // Ignore checkpoint creation errors - it's optional
+      console.log('Journey checkpoint creation skipped')
+    }
+  }
+
+  // Send notifications to guest, driver, and user/host
+  const sendNotifications = async (
+    trip: Trip,
+    status: 'collected' | 'arrived' | 'delayed' | 'cancelled',
+    reason?: string,
+    delayMinutes?: number
+  ) => {
+    try {
+      const notificationData: any = {
+        event_id: trip.event_id,
+        guest_id: trip.guest_id,
+        guest_email: trip.guest_email,
+        status,
+        driver_name: driverName,
+        guest_name: `${trip.guest_first_name} ${trip.guest_last_name}`
+      }
+
+      if (reason) notificationData.reason = reason
+      if (delayMinutes) notificationData.delay_minutes = delayMinutes
+
+      // Create notification records - using itinerary_module_notifications table
+      const title = status === 'collected' 
+        ? 'Guest Collected'
+        : status === 'arrived'
+        ? 'Guest Arrived'
+        : status === 'delayed'
+        ? 'Trip Delayed'
+        : 'Trip Cancelled'
+
+      const body = status === 'collected'
+        ? `${trip.guest_first_name} ${trip.guest_last_name} has been collected by driver ${driverName}`
+        : status === 'arrived'
+        ? `${trip.guest_first_name} ${trip.guest_last_name} has arrived at destination`
+        : status === 'delayed'
+        ? `${trip.guest_first_name} ${trip.guest_last_name}'s trip is delayed by ${delayMinutes} minutes. Reason: ${reason}`
+        : `${trip.guest_first_name} ${trip.guest_last_name}'s trip has been cancelled. Reason: ${reason}`
+
+      // Insert notification for guest
+      if (trip.guest_email) {
+        await supabase
+          .from('itinerary_module_notifications')
+          .insert({
+            event_id: trip.event_id,
+            guest_id: trip.guest_id,
+            title,
+            body,
+            notification_type: 'trip_status',
+            module_type: 'chauffer_service'
+          })
+          .catch(err => console.error('Failed to create guest notification:', err))
+      }
+
+      // TODO: Send push notifications to guest mobile app
+      // TODO: Send notification to event host/user via notification system
+      // These would be handled by backend services
+    } catch (err) {
+      console.error('Failed to send notifications:', err)
+      // Don't throw - notifications are not critical for trip status update
+    }
   }
 
   const formatDate = (dateString: string | null) => {
@@ -229,8 +482,24 @@ export default function Trips() {
             Next Trip
           </div>
           <div style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
+            background: nextTrip.status === 'cancelled' 
+              ? 'rgba(239, 68, 68, 0.15)'
+              : nextTrip.status === 'delayed'
+              ? 'rgba(251, 191, 36, 0.12)'
+              : nextTrip.status === 'collected'
+              ? 'rgba(59, 130, 246, 0.1)'
+              : nextTrip.status === 'arrived'
+              ? 'rgba(16, 185, 129, 0.1)'
+              : 'rgba(16, 185, 129, 0.1)',
+            border: `1px solid ${nextTrip.status === 'cancelled' 
+              ? 'rgba(239, 68, 68, 0.4)'
+              : nextTrip.status === 'delayed'
+              ? 'rgba(251, 191, 36, 0.3)'
+              : nextTrip.status === 'collected'
+              ? 'rgba(59, 130, 246, 0.3)'
+              : nextTrip.status === 'arrived'
+              ? 'rgba(16, 185, 129, 0.3)'
+              : 'rgba(16, 185, 129, 0.2)'}`,
             borderRadius: '16px',
             padding: '20px',
             position: 'relative',
@@ -435,29 +704,133 @@ export default function Trips() {
                   </div>
                 )}
               </div>
-              <button
-                style={{
-                  width: '100%',
-                  background: '#10b981',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '14px',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                  marginTop: '8px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#0d9d70'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#10b981'
-                }}
-              >
-                Scan Guest QR
-              </button>
+              {/* Trip Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                {nextTrip.status === 'pending' || !nextTrip.status ? (
+                  <button
+                    onClick={() => {
+                      setScanningTripId(nextTrip.id)
+                      setShowQRScanner(true)
+                    }}
+                    style={{
+                      width: '100%',
+                      background: '#10b981',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '14px',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#0d9d70'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#10b981'
+                    }}
+                  >
+                    Scan Guest QR
+                  </button>
+                ) : nextTrip.status === 'collected' ? (
+                  <>
+                    <button
+                      onClick={() => handleMarkArrived(nextTrip.id)}
+                      style={{
+                        width: '100%',
+                        background: '#10b981',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '14px',
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#0d9d70'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#10b981'
+                      }}
+                    >
+                      ✓ Arrived
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDelayTripId(nextTrip.id)
+                        setShowDelayModal(true)
+                      }}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(251, 191, 36, 0.15)',
+                        color: '#fbbf24',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        borderRadius: '12px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'
+                      }}
+                    >
+                      Set Delay
+                    </button>
+                  </>
+                ) : nextTrip.status === 'arrived' ? (
+                  <div style={{
+                    width: '100%',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#10b981',
+                    textAlign: 'center'
+                  }}>
+                    ✓ Trip Completed
+                  </div>
+                ) : null}
+                
+                {/* Cancel Trip Button - Available for all statuses except cancelled */}
+                {nextTrip.status !== 'cancelled' && (
+                  <button
+                    onClick={() => {
+                      setCancelTripId(nextTrip.id)
+                      setShowCancelModal(true)
+                    }}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                    }}
+                  >
+                    Cancel Trip
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -485,8 +858,24 @@ export default function Trips() {
               <div
                 key={trip.id}
                 style={{
-                  background: 'rgba(30, 30, 30, 0.55)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: trip.status === 'cancelled' 
+                    ? 'rgba(239, 68, 68, 0.15)'
+                    : trip.status === 'delayed'
+                    ? 'rgba(251, 191, 36, 0.12)'
+                    : trip.status === 'collected'
+                    ? 'rgba(59, 130, 246, 0.1)'
+                    : trip.status === 'arrived'
+                    ? 'rgba(16, 185, 129, 0.1)'
+                    : 'rgba(30, 30, 30, 0.55)',
+                  border: `1px solid ${trip.status === 'cancelled' 
+                    ? 'rgba(239, 68, 68, 0.4)'
+                    : trip.status === 'delayed'
+                    ? 'rgba(251, 191, 36, 0.3)'
+                    : trip.status === 'collected'
+                    ? 'rgba(59, 130, 246, 0.3)'
+                    : trip.status === 'arrived'
+                    ? 'rgba(16, 185, 129, 0.3)'
+                    : 'rgba(255, 255, 255, 0.08)'}`,
                   borderRadius: '16px',
                   padding: '18px',
                   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)'
@@ -667,8 +1056,426 @@ export default function Trips() {
                     </div>
                   )}
                 </div>
+                
+                {/* Trip Action Buttons for All Trips */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                  {trip.status === 'pending' || !trip.status ? (
+                    <button
+                      onClick={() => {
+                        setScanningTripId(trip.id)
+                        setShowQRScanner(true)
+                      }}
+                      style={{
+                        width: '100%',
+                        background: '#10b981',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#0d9d70'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#10b981'
+                      }}
+                    >
+                      Scan Guest QR
+                    </button>
+                  ) : trip.status === 'collected' ? (
+                    <>
+                      <button
+                        onClick={() => handleMarkArrived(trip.id)}
+                        style={{
+                          width: '100%',
+                          background: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '10px',
+                          padding: '12px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#0d9d70'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#10b981'
+                        }}
+                      >
+                        ✓ Arrived
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDelayTripId(trip.id)
+                          setShowDelayModal(true)
+                        }}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(251, 191, 36, 0.15)',
+                          color: '#fbbf24',
+                          border: '1px solid rgba(251, 191, 36, 0.3)',
+                          borderRadius: '10px',
+                          padding: '10px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'
+                        }}
+                      >
+                        Set Delay
+                      </button>
+                    </>
+                  ) : trip.status === 'arrived' ? (
+                    <div style={{
+                      width: '100%',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#10b981',
+                      textAlign: 'center'
+                    }}>
+                      ✓ Trip Completed
+                    </div>
+                  ) : trip.status === 'cancelled' ? (
+                    <div style={{
+                      width: '100%',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#ef4444',
+                      textAlign: 'center'
+                    }}>
+                      ✗ Trip Cancelled
+                    </div>
+                  ) : null}
+                  
+                  {/* Cancel Trip Button - Available for all statuses except cancelled */}
+                  {trip.status !== 'cancelled' && (
+                    <button
+                      onClick={() => {
+                        setCancelTripId(trip.id)
+                        setShowCancelModal(true)
+                      }}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '10px',
+                        padding: '10px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                      }}
+                    >
+                      Cancel Trip
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={showQRScanner}
+        onClose={() => {
+          setShowQRScanner(false)
+          setScanningTripId(null)
+        }}
+        onScan={handleQRScan}
+      />
+
+      {/* Delay Modal */}
+      {showDelayModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDelayModal(false)
+              setDelayTripId(null)
+              setDelayMinutes('')
+              setDelayReason('')
+            }
+          }}
+        >
+          <div
+            style={{
+              background: '#1a1a1a',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#e5e7eb',
+              marginBottom: '20px'
+            }}>
+              Set Delay
+            </h2>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#cbd5e1',
+                marginBottom: '8px'
+              }}>
+                Delay (minutes)
+              </label>
+              <input
+                type="number"
+                value={delayMinutes}
+                onChange={(e) => setDelayMinutes(e.target.value)}
+                placeholder="Enter delay in minutes"
+                min="1"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  background: 'rgba(15, 17, 21, 0.8)',
+                  color: '#e5e7eb',
+                  fontSize: '15px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#cbd5e1',
+                marginBottom: '8px'
+              }}>
+                Reason
+              </label>
+              <textarea
+                value={delayReason}
+                onChange={(e) => setDelayReason(e.target.value)}
+                placeholder="Enter delay reason..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  background: 'rgba(15, 17, 21, 0.8)',
+                  color: '#e5e7eb',
+                  fontSize: '15px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowDelayModal(false)
+                  setDelayTripId(null)
+                  setDelayMinutes('')
+                  setDelayReason('')
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  background: 'rgba(15, 17, 21, 0.8)',
+                  color: '#cbd5e1',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSetDelay}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  background: '#fbbf24',
+                  color: '#000',
+                  border: 'none',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Set Delay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Trip Modal */}
+      {showCancelModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowCancelModal(false)
+              setCancelTripId(null)
+              setCancelReason('')
+            }
+          }}
+        >
+          <div
+            style={{
+              background: '#1a1a1a',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#ef4444',
+              marginBottom: '12px'
+            }}>
+              Cancel Trip
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#9ca3af',
+              marginBottom: '20px'
+            }}>
+              Are you sure you want to cancel this trip? This action cannot be undone.
+            </p>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#cbd5e1',
+                marginBottom: '8px'
+              }}>
+                Cancellation Reason *
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Enter cancellation reason..."
+                rows={3}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(15, 17, 21, 0.8)',
+                  color: '#e5e7eb',
+                  fontSize: '15px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowCancelModal(false)
+                  setCancelTripId(null)
+                  setCancelReason('')
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  background: 'rgba(15, 17, 21, 0.8)',
+                  color: '#cbd5e1',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCancelTrip}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  background: '#ef4444',
+                  color: '#fff',
+                  border: 'none',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel Trip
+              </button>
+            </div>
           </div>
         </div>
       )}

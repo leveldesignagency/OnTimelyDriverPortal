@@ -1,0 +1,238 @@
+0 verbose cli /Users/charlesmorgan/.nvm/versions/node/v18.20.8/bin/node /Users/charlesmorgan/.nvm/versions/node/v18.20.8/bin/npm
+1 info using npm@10.8.2
+2 info using node@v18.20.8
+3 silly config load:file:/Users/charlesmorgan/.nvm/versions/node/v18.20.8/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/charlesmorgan/Documents/Timely/apps/driver-portal/.npmrc
+5 silly config load:file:/Users/charlesmorgan/.npmrc
+6 silly config load:file:/Users/charlesmorgan/.nvm/versions/node/v18.20.8/etc/npmrc
+7 verbose title npm install
+8 verbose argv "install" "--no-audit" "--prefer-offline" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/charlesmorgan/Documents/Timely/apps/driver-portal/.npm-cache/_logs/2025-10-30T16_43_36_818Z-
+10 verbose logfile /Users/charlesmorgan/Documents/Timely/apps/driver-portal/.npm-cache/_logs/2025-10-30T16_43_36_818Z-debug-0.log
+11 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+12 silly logfile done cleaning log files
+13 silly idealTree buildDeps
+14 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+15 silly reify moves {}
+16 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-x64-msvc
+17 silly reify mark deleted [
+17 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-x64-msvc'
+17 silly reify ]
+18 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-x64-gnu
+19 silly reify mark deleted [
+19 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-x64-gnu'
+19 silly reify ]
+20 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-ia32-msvc
+21 silly reify mark deleted [
+21 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-ia32-msvc'
+21 silly reify ]
+22 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-arm64-msvc
+23 silly reify mark deleted [
+23 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-win32-arm64-msvc'
+23 silly reify ]
+24 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-openharmony-arm64
+25 silly reify mark deleted [
+25 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-openharmony-arm64'
+25 silly reify ]
+26 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-x64-musl
+27 silly reify mark deleted [
+27 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-x64-musl'
+27 silly reify ]
+28 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-x64-gnu
+29 silly reify mark deleted [
+29 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-x64-gnu'
+29 silly reify ]
+30 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-s390x-gnu
+31 silly reify mark deleted [
+31 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-s390x-gnu'
+31 silly reify ]
+32 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-riscv64-musl
+33 silly reify mark deleted [
+33 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-riscv64-musl'
+33 silly reify ]
+34 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-riscv64-gnu
+35 silly reify mark deleted [
+35 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-riscv64-gnu'
+35 silly reify ]
+36 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-ppc64-gnu
+37 silly reify mark deleted [
+37 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-ppc64-gnu'
+37 silly reify ]
+38 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-loong64-gnu
+39 silly reify mark deleted [
+39 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-loong64-gnu'
+39 silly reify ]
+40 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm64-musl
+41 silly reify mark deleted [
+41 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm64-musl'
+41 silly reify ]
+42 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm64-gnu
+43 silly reify mark deleted [
+43 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm64-gnu'
+43 silly reify ]
+44 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm-musleabihf
+45 silly reify mark deleted [
+45 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm-musleabihf'
+45 silly reify ]
+46 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm-gnueabihf
+47 silly reify mark deleted [
+47 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-linux-arm-gnueabihf'
+47 silly reify ]
+48 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-freebsd-x64
+49 silly reify mark deleted [
+49 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-freebsd-x64'
+49 silly reify ]
+50 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-freebsd-arm64
+51 silly reify mark deleted [
+51 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-freebsd-arm64'
+51 silly reify ]
+52 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-darwin-x64
+53 silly reify mark deleted [
+53 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-darwin-x64'
+53 silly reify ]
+54 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-android-arm64
+55 silly reify mark deleted [
+55 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-android-arm64'
+55 silly reify ]
+56 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-android-arm-eabi
+57 silly reify mark deleted [
+57 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@rollup/rollup-android-arm-eabi'
+57 silly reify ]
+58 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-x64
+59 silly reify mark deleted [
+59 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-x64'
+59 silly reify ]
+60 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-ia32
+61 silly reify mark deleted [
+61 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-ia32'
+61 silly reify ]
+62 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-arm64
+63 silly reify mark deleted [
+63 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/win32-arm64'
+63 silly reify ]
+64 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/sunos-x64
+65 silly reify mark deleted [
+65 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/sunos-x64'
+65 silly reify ]
+66 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/openbsd-x64
+67 silly reify mark deleted [
+67 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/openbsd-x64'
+67 silly reify ]
+68 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/netbsd-x64
+69 silly reify mark deleted [
+69 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/netbsd-x64'
+69 silly reify ]
+70 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-x64
+71 silly reify mark deleted [
+71 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-x64'
+71 silly reify ]
+72 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-s390x
+73 silly reify mark deleted [
+73 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-s390x'
+73 silly reify ]
+74 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-riscv64
+75 silly reify mark deleted [
+75 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-riscv64'
+75 silly reify ]
+76 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-ppc64
+77 silly reify mark deleted [
+77 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-ppc64'
+77 silly reify ]
+78 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-mips64el
+79 silly reify mark deleted [
+79 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-mips64el'
+79 silly reify ]
+80 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-loong64
+81 silly reify mark deleted [
+81 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-loong64'
+81 silly reify ]
+82 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-ia32
+83 silly reify mark deleted [
+83 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-ia32'
+83 silly reify ]
+84 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-arm64
+85 silly reify mark deleted [
+85 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-arm64'
+85 silly reify ]
+86 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-arm
+87 silly reify mark deleted [
+87 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/linux-arm'
+87 silly reify ]
+88 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/freebsd-x64
+89 silly reify mark deleted [
+89 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/freebsd-x64'
+89 silly reify ]
+90 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/freebsd-arm64
+91 silly reify mark deleted [
+91 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/freebsd-arm64'
+91 silly reify ]
+92 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/darwin-x64
+93 silly reify mark deleted [
+93 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/darwin-x64'
+93 silly reify ]
+94 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-x64
+95 silly reify mark deleted [
+95 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-x64'
+95 silly reify ]
+96 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-arm64
+97 silly reify mark deleted [
+97 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-arm64'
+97 silly reify ]
+98 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-arm
+99 silly reify mark deleted [
+99 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/android-arm'
+99 silly reify ]
+100 verbose reify failed optional dependency /Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/aix-ppc64
+101 silly reify mark deleted [
+101 silly reify   '/Users/charlesmorgan/Documents/Timely/apps/driver-portal/node_modules/@esbuild/aix-ppc64'
+101 silly reify ]
+102 silly ADD node_modules/fsevents
+103 silly ADD
+104 silly ADD
+105 silly ADD
+106 silly ADD
+107 silly ADD
+108 silly ADD
+109 silly ADD
+110 silly ADD
+111 silly ADD
+112 silly ADD
+113 silly ADD
+114 silly ADD
+115 silly ADD
+116 silly ADD
+117 silly ADD
+118 silly ADD
+119 silly ADD
+120 silly ADD
+121 silly ADD
+122 silly ADD
+123 silly ADD
+124 silly ADD
+125 silly ADD
+126 silly ADD
+127 silly ADD
+128 silly ADD
+129 silly ADD
+130 silly ADD
+131 silly ADD
+132 silly ADD
+133 silly ADD
+134 silly ADD
+135 silly ADD
+136 silly ADD
+137 silly ADD
+138 silly ADD
+139 silly ADD
+140 silly ADD
+141 silly ADD
+142 silly ADD
+143 silly ADD
+144 silly ADD
+145 silly ADD
+146 verbose cwd /Users/charlesmorgan/Documents/Timely/apps/driver-portal
+147 verbose os Darwin 24.5.0
+148 verbose node v18.20.8
+149 verbose npm  v10.8.2
+150 verbose exit 0
+151 info ok

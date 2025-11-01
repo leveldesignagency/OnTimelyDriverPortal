@@ -32,9 +32,23 @@ export default function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
         const reader = new BrowserMultiFormatReader()
         readerRef.current = reader
 
-        // Get available video devices
-        const devices = await reader.listVideoInputDevices()
-        const deviceId = devices.length > 0 ? devices[0].deviceId : undefined
+        // Get available video devices using browser API
+        let deviceId: string | undefined = undefined
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices()
+          const videoDevices = devices.filter(device => device.kind === 'videoinput')
+          if (videoDevices.length > 0) {
+            // Prefer back camera if available
+            const backCamera = videoDevices.find(device => 
+              device.label.toLowerCase().includes('back') || 
+              device.label.toLowerCase().includes('rear')
+            )
+            deviceId = backCamera ? backCamera.deviceId : videoDevices[0].deviceId
+          }
+        } catch (err) {
+          console.warn('Could not enumerate devices:', err)
+          // Continue without device selection - will use default camera
+        }
 
         if (!videoRef.current) {
           setError('Video element not available')

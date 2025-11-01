@@ -8,8 +8,8 @@ type Trip = {
   event_id: string
   guest_first_name: string
   guest_last_name: string
-  guest_email: string | null
   guest_contact_number: string | null
+  host_contact_number: string | null
   pickup_time: string | null
   pickup_location: string | null
   dropoff_location: string | null
@@ -105,7 +105,7 @@ export default function Trips() {
       // This table is designed for drivers to read (respects RLS policies)
       let query = supabase
         .from('driver_trips')
-        .select('id, guest_id, event_id, guest_first_name, guest_last_name, guest_email, guest_contact_number, pickup_time, pickup_location, dropoff_location, dropoff_time, status, collected_at, arrived_at, delay_reason, delay_minutes, cancelled_at, cancellation_reason')
+        .select('id, guest_id, event_id, guest_first_name, guest_last_name, guest_contact_number, host_contact_number, pickup_time, pickup_location, dropoff_location, dropoff_time, status, collected_at, arrived_at, delay_reason, delay_minutes, cancelled_at, cancellation_reason')
 
       // Query by driver_id - this is the correct way for driver_trips table
       if (driverId) {
@@ -332,7 +332,6 @@ export default function Trips() {
       const notificationData: any = {
         event_id: trip.event_id,
         guest_id: trip.guest_id,
-        guest_email: trip.guest_email,
         status,
         driver_name: driverName,
         guest_name: `${trip.guest_first_name} ${trip.guest_last_name}`
@@ -358,20 +357,18 @@ export default function Trips() {
         ? `${trip.guest_first_name} ${trip.guest_last_name}'s trip is delayed by ${delayMinutes} minutes. Reason: ${reason}`
         : `${trip.guest_first_name} ${trip.guest_last_name}'s trip has been cancelled. Reason: ${reason}`
 
-      // Insert notification for guest
-      if (trip.guest_email) {
-        await supabase
-          .from('itinerary_module_notifications')
-          .insert({
-            event_id: trip.event_id,
-            guest_id: trip.guest_id,
-            title,
-            body,
-            notification_type: 'trip_status',
-            module_type: 'chauffer_service'
-          })
-          .catch(err => console.error('Failed to create guest notification:', err))
-      }
+      // Insert notification for guest (using guest_id to find guest email)
+      await supabase
+        .from('itinerary_module_notifications')
+        .insert({
+          event_id: trip.event_id,
+          guest_id: trip.guest_id,
+          title,
+          body,
+          notification_type: 'trip_status',
+          module_type: 'chauffer_service'
+        })
+        .catch(err => console.error('Failed to create guest notification:', err))
 
       // TODO: Send push notifications to guest mobile app
       // TODO: Send notification to event host/user via notification system
@@ -556,13 +553,13 @@ export default function Trips() {
                 }}>
                   Contact
                 </div>
-                {nextTrip.guest_email ? (
+                {nextTrip.host_contact_number ? (
                   <div style={{
                     fontSize: '14px',
                     color: '#e5e7eb',
                     marginBottom: '4px'
                   }}>
-                    📧 {nextTrip.guest_email}
+                    📞 Host: {nextTrip.host_contact_number}
                   </div>
                 ) : (
                   <div style={{
@@ -571,7 +568,7 @@ export default function Trips() {
                     fontStyle: 'italic',
                     marginBottom: '4px'
                   }}>
-                    Email: Not provided
+                    Host Contact: Not provided
                   </div>
                 )}
                 {nextTrip.guest_contact_number ? (
@@ -579,7 +576,7 @@ export default function Trips() {
                     fontSize: '14px',
                     color: '#e5e7eb'
                   }}>
-                    📱 {nextTrip.guest_contact_number}
+                    📱 Guest: {nextTrip.guest_contact_number}
                   </div>
                 ) : (
                   <div style={{
@@ -587,7 +584,7 @@ export default function Trips() {
                     color: '#9ca3af',
                     fontStyle: 'italic'
                   }}>
-                    Phone: Not provided
+                    Guest Phone: Not provided
                   </div>
                 )}
               </div>
@@ -919,13 +916,13 @@ export default function Trips() {
                   }}>
                     Contact
                   </div>
-                  {trip.guest_email ? (
+                  {trip.host_contact_number ? (
                       <div style={{
                         fontSize: '13px',
                         color: '#e5e7eb',
                         marginBottom: '2px'
                       }}>
-                        📧 {trip.guest_email}
+                        📞 Host: {trip.host_contact_number}
                       </div>
                     ) : (
                       <div style={{
@@ -934,7 +931,7 @@ export default function Trips() {
                         fontStyle: 'italic',
                         marginBottom: '2px'
                       }}>
-                        Email: Not provided
+                        Host Contact: Not provided
                       </div>
                     )}
                     {trip.guest_contact_number ? (
@@ -942,7 +939,7 @@ export default function Trips() {
                         fontSize: '13px',
                         color: '#e5e7eb'
                       }}>
-                        📱 {trip.guest_contact_number}
+                        📱 Guest: {trip.guest_contact_number}
                       </div>
                     ) : (
                       <div style={{
@@ -950,7 +947,7 @@ export default function Trips() {
                         color: '#9ca3af',
                         fontStyle: 'italic'
                       }}>
-                        Phone: Not provided
+                        Guest Phone: Not provided
                       </div>
                     )}
                 </div>
